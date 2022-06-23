@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+  <!--
+    WARNING! Make sure that you match all Quasar related
+    tags to the same version! (Below it's "@2.3.3")
+  -->
+
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@2.3.3/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+
+    <style>
+      div.background {
+        position: absolute;
+        top: 0px; left: 0px;
+        min-width: 435px;
+        min-height: 1000px;
+        height: 100%; width: 100%;
+        /*background: #408dce url('https://hoidrop.s3-us-west-2.amazonaws.com/cp_social_app_background.jpg') no-repeat center center;*/
+        background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+      }
+
+      div.iphone {
+        height: 810px; width: 435px;
+        position: absolute;
+        margin: auto;
+        top: 0px; bottom: 80px; left: 0px; right: 0px;
+        background: url('./img/cp_social_app_iphone.png') no-repeat center center;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+      }
+      div.screen {
+        height: 568px; width: 320px;
+        position: absolute;
+        top: 119px; left: 59px;
+        overflow: hidden;
+        position: relative;
+      }
+      div.status {
+        position: absolute;
+        top: 0px; left: 0px;
+        z-index: 200;
+        height: 20px; width: 100%;
+        background: url('./img/cp_social_app_status_black.png') no-repeat center center;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+      }
+      div.status:hover {
+        background-image: url('./img/cp_social_app_status_white.png');
+      }
+      div.content {
+        position: absolute;
+        top: 0px; left: 0px;
+        height: 568px; width: 320px;
+        background: #fff;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="background">
+      <div class="iphone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="content">
+            <div id="q-app">
+              <div class="q-pa-md row justify-center">
+                <q-scroll-area 
+                visible="false"
+                ref="scrollAreaRef"
+                style="width: 100%; 
+                max-width: 400px; height: 540px">
+                  <q-chat-message
+                          v-for="msg in messages"
+                          :name="msg.name"
+                          :avatar="msg.avatar"
+                          :text="msg.text"
+                          :stamp="msg.time"
+                          text-color="white"
+                          :sent="msg.sent"
+                          :bg-color="msg.color"
+                  >
+
+                    <!-- <q-spinner-dots v-show="msg.wait" size="2rem" /> -->
+                  </q-chat-message>
+                </q-scroll-area>
+              </div>
+            </div>
+            <!-- end vue -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add the following at the end of your body tag -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quasar@2.3.3/dist/quasar.umd.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    
+    <script>
+      /*
+        Example kicking off the UI. Obviously, adapt this to your specific needs.
+        Assumes you have a <div id="q-app"></div> in your <body> above
+       */
+      const getMessage = (idx,text)=>{
+        let ret = {
+          id: idx,
+          name: "我小子",
+          time: Date(),
+          text: [text],
+          sent: true,
+          color: 'pink-4',
+          avatar: 'https://cdn.quasar.dev/img/boy-avatar.png',
+          wait: false
+        }
+        if(idx==='01'){
+          ret.name = '贴心小棉袄'
+          ret.sent = false
+          ret.color = 'light-blue'
+          ret.avatar = './img/helper.jpg'
+          ret.wait = true
+        }
+        return ret
+      }
+      
+      const app = Vue.createApp({
+        setup () {
+
+          let messages = Vue.ref([])
+          const scrollAreaRef = Vue.ref(null)
+
+          const putMessage = (msg)=>{
+            messages.value.push(msg)
+            let size = scrollAreaRef.value.getScroll().verticalSize
+            scrollAreaRef.value.setScrollPosition('vertical',size,1000)
+          }
+
+          Vue.onMounted(()=>{
+            document.onkeydown = async (e) => {
+              if(!e)e = window.event;
+              let bCtrlKeyCode = e.ctrlKey || e.metaKey;
+              if((e.keyCode || e.which) == 13 && bCtrlKeyCode){
+                Quasar.Dialog.create({
+                  title: '你小子',
+                  message: '输入你的回答',
+                  prompt: {
+                    model: '我是谁，我在哪，我要作甚？',
+                    type: 'text' // optional
+                  },
+                  cancel: true,
+                  persistent: true
+                }).onOk(data => {
+                  putMessage(getMessage('02',data))
+                  answerQuestion(data)
+                }).onCancel(() => {
+                  // console.log('>>>> Cancel')
+                }).onDismiss(() => {
+                  // console.log('I am triggered on both OK and Cancel')
+                })
+              }
+            }
+          })
+
+          const answerQuestion = (text)=>{
+            setTimeout(()=>{
+              putMessage(getMessage('01',`I cannot answer your problem [${text}]`))
+            },1000)
+
+
+            // axios.get('/q', {
+            //   params: {
+            //     ques: text
+            //   }
+            // })
+            // .then(function (response) {
+            //   console.log(response)
+            //   messages.value.push(getMessage('01',response.data))
+            // })
+            // .catch(function (error) {
+            //   console.log(error);
+            // });
+          }
+          return {messages,scrollAreaRef}
+        }
+      })
+
+      app.use(Quasar)
+      app.mount('#q-app')
+
+
+    </script>
+  </body>
+</html>
+
+<!-- const arrFileHandle = await window.showOpenFilePicker({
+                  types: [{
+                      accept: {
+                          "application/json":[".json"]
+                      }
+                  }],
+                  multiple: false
+              });
+
+              const fileData = await arrFileHandle[0].getFile();
+                  
+              fileData.text().then(data=>{
+                console.log(JSON.parse(data))
+                messages.value = Array.from(JSON.parse(data), x=>{
+                  if (x.id==="01"){
+                    x.sent = false
+                    x.color = 'light-blue'
+                    x.avatar = 'helper'
+                  }else{
+                    x.sent = true
+                    x.color = 'pink-4'
+                    x.avatar = 'user'
+                  }
+                  return x
+                });
+              }) -->
